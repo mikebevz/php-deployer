@@ -1,0 +1,17 @@
+PHP Deployer
+A tool for deployment of PHP projects
+
+Features:
+- Pack files into archive
+- Tranfer files using
+   - SFTP
+   - FTP
+- Show progress of uploading
+- Unpack on the server
+
+Requirements:
+- PHP 5
+- PHP Zip extension
+- gzip installed in the system
+
+
