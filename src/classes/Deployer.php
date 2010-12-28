@@ -13,7 +13,7 @@ class Deployer {
     private $remotePort = 22;
     private $remoteUsername = "";
     private $remotePassword = "";
-    private $knownHost = "D59C12ADC382C3A12E519D05484690A2"; // prod.nordsign.dk
+    private $knownHost = "D59C12ADC382C3A12E519D05484690A2"; 
     /**
     *
     * Phar
@@ -346,35 +346,7 @@ class Deployer {
 
         public function unzipRemote($connection = false) {
             $this->remoteCommand('/var/www/sites/deploy/unzip.php');
-            /*
-            if ($connection === false) {
-                $connection = $this->getSshConnection();
-            }
-            // Run unzip.php through console
-            $this->say("Executing unzip.php");
 
-            $stream = ssh2_exec($connection, '/var/www/sites/deploy/unzip.php', true);
-            stream_set_blocking($stream, true);
-
-            $errorStream = ssh2_fetch_stream($stream, SSH2_STREAM_STDERR);
-            stream_set_blocking($errorStream, true);
-
-            while($line = fgets($stream)) {
-                flush();
-                $line .= $line;
-            }
-
-            if ($line != '') {
-                $this->say("Result: ".$line);
-            }
-
-
-            $this->say("Result: ".stream_get_contents($stream));
-            $this->say("Error: ".stream_get_contents($errorStream));
-
-            fclose($stream);
-            fclose($errorStream);
-            */
 
         }
 
