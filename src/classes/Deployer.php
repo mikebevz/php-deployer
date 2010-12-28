@@ -33,6 +33,8 @@ class Deployer {
      */
     private $config;
     private $verbose;
+    
+    private $configSchemaPath;
 
     private $items = array(
     // Application
@@ -108,8 +110,8 @@ class Deployer {
         echo($msg."\n");
     }
 
-    public function __construct($config = "config.xml") {
-        if ($config == "config.xml") {
+    public function __construct($config = "deployer.xml") {
+        if ($config == "deployer.xml") {
             $this->configPath = dirname(__FILE__).DIRECTORY_SEPARATOR.$config;
         } elseif (file_exists($config)) {
             $this->configPath = $config;
@@ -120,7 +122,9 @@ class Deployer {
         if (!is_readable($this->configPath)) {
             throw new Exception($this->configPath." is not readable");
         }
-
+        
+        $this->configSchemaPath = dirname(__FILE__).DIRECTORY_SEPARATOR."Deployer_1.0.xsd";
+        
         $this->parseConfig();
 
 
@@ -128,6 +132,16 @@ class Deployer {
 
     private function parseConfig() {
         $this->say("Parsing config in ".$this->configPath);
+        
+        libxml_use_internal_errors(true);
+        $doc = new DOMDocument();
+        $doc->load($this->configPath);
+        $doc->schemaValidate($this->configSchemaPath);
+        $errors = libxml_get_errors();
+        if ($errors) {
+             throw new Exception($errors[0]->message);
+        }
+        
         $this->config = simplexml_load_file($this->configPath, "SimpleXMLElement", LIBXML_COMPACT|LIBXML_NOCDATA);
         
         $config = (array)$this->config;

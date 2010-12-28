@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployer xmlns="http://moyarada.com/schemas/Deployer_1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://moyarada.com/schemas/Deployer_1.0 Deployer_1.0.xsd">
+	xsi:schemaLocation="http://moyarada.com/schemas/Deployer_1.0 ../classes/Deployer_1.0.xsd">
 
 	<!-- REMEMBER to update Schema once you added/deleted something from config -->
 
