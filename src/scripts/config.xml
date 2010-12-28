@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deployer xmlns="http://moyarada.com/schemas/Deployer_1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://moyarada.com/schemas/Deployer_1.0 Deployer_1.0.xsd">
+
+	<!-- REMEMBER to update Schema once you added/deleted something from config -->
+
+    <verbose>true</verbose>
+	<!-- Temporary directory where all work is performed, relative -->
+	<targetDir>../target</targetDir>
+	<!-- Where your project directory located, absolute path, or relative to scripts 
+		directory -->
+	<sourceDir>../exampleSourceDir</sourceDir>
+	<localDeploymentDir></localDeploymentDir>
+	<remoteDeploymentDir></remoteDeploymentDir>
+
+	<!-- Relative to sourceDir -->
+	<items>
+		<!-- Copy recursivelly the entire directory -->
+		<item>application/auth</item>
+		<item>application/controllers</item>
+		<item>application/exceptions</item>
+
+		<!-- Copy only this file. all directories in path will be created -->
+		<item>deploy/classes/BackupManager.php</item>
+
+		<!-- Absolute path to copy. Will be ignored for now. !! Is not clear how to implement 
+			unpacking -->
+		<item>/usr/local/etc/nginx</item>
+	</items>
+
+	<transports>
+		<tranport name="ProdServer">
+			<type>SFTP</type>
+			<login></login>
+			<password></password>
+			<host></host>
+			<port></port>
+			<fingerprints>
+				<fingerprint></fingerprint>
+			</fingerprints>
+			<pubKeyPath></pubKeyPath>
+			<privKeyPath></privKeyPath>
+		</tranport>
+
+		<tranport name="DevServer">
+			<type>FTP</type>
+			<login></login>
+			<password></password>
+			<host></host>
+			<port></port>
+		</tranport>
+
+	</transports>
+
+</deployer>

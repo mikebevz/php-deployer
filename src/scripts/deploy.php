@@ -1,8 +1,10 @@
 #!/usr/bin/php
 <?php
 
-include_once "classes/Deployer.php";
-include_once "classes/BackupManager.php";
+include_once dirname(__FILE__).DIRECTORY_SEPARATOR."../classes/Deployer.php";
+//include_once dirname(__FILE__).DIRECTORY_SEPARATOR."../classes/BackupManager.php";
+
+
 
 $dep = new Deployer();
 // Configuration

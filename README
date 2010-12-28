@@ -12,6 +12,7 @@ Features:
 Requirements:
 - PHP 5
 - PHP Zip extension
+- PHP Ssh2 extension
 - gzip installed in the system
 
 

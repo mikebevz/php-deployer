@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://moyarada.com/schemas/Deployer_1.0"
+	xmlns:tns="http://moyarada.com/schemas/Deployer_1.0" elementFormDefault="qualified">
+	<annotation>
+		<documentation>Deployer configuration file schema</documentation>
+	</annotation>
+
+	<complexType name="DeployerType">
+		<sequence>
+		    <element name="verbose" type="boolean" minOccurs="0" maxOccurs="1"/>
+			<element ref="tns:targetDir" maxOccurs="1" minOccurs="1" />
+			<element ref="tns:sourceDir" maxOccurs="1" minOccurs="1" />
+			<element ref="tns:localDeploymentDir" maxOccurs="1" minOccurs="0" />
+			<element ref="tns:remoteDeploymentDir" maxOccurs="1" minOccurs="0" />
+			<element ref="tns:items" minOccurs="1" maxOccurs="1" />
+			<element ref="tns:transports" minOccurs="1" maxOccurs="1" />
+		</sequence>
+	</complexType>
+	<complexType name="ItemType">
+		<annotation>
+			<documentation>Local directories where project is to be deployed to
+			</documentation>
+		</annotation>
+		<sequence>
+			<element name="item" type="string" minOccurs="1" maxOccurs="unbounded">
+				<annotation>
+					<documentation>Path to the file or directory to be deployed, relative to
+						sourceDir</documentation>
+				</annotation>
+			</element>
+		</sequence>
+	</complexType>
+
+	<simpleType name="TransportTypesType">
+		<annotation>
+			<documentation>Supported transport types</documentation>
+		</annotation>
+		<restriction base="string">
+			<enumeration value="FTP" />
+			<enumeration value="SFTP" />
+		</restriction>
+	</simpleType>
+
+	<complexType name="FingerprintType">
+		<sequence>
+			<element name="fingerprint" type="string" minOccurs="1" maxOccurs="unbounded" />
+		</sequence>
+	</complexType>
+
+	<complexType name="Transports">
+		<annotation>
+			<documentation>Transport settings, FTP, SFTP</documentation>
+		</annotation>
+		<sequence>
+			<element name="tranport" minOccurs="1" maxOccurs="unbounded">
+				<annotation>
+					<documentation>Particular transport settings</documentation>
+				</annotation>
+				<complexType>
+					<sequence>
+
+						<element name="type" type="tns:TransportTypesType" />
+						<element name="login" type="string" maxOccurs="1" minOccurs="0" />
+						<element name="password" type="string" maxOccurs="1" minOccurs="0" />
+						<element name="host" type="string" maxOccurs="1" minOccurs="1" />
+						<element name="port" type="string" maxOccurs="1" minOccurs="1" />
+						<element name="fingerprints" type="tns:FingerprintType" maxOccurs="1"
+							minOccurs="0" />
+						<element name="pubKeyPath" type="string" maxOccurs="1" minOccurs="0" />
+						<element name="privKeyPath" type="string" maxOccurs="1" minOccurs="0" />
+					</sequence>
+					<attribute name="name" type="string" />
+				</complexType>
+
+			</element>
+
+		</sequence>
+	</complexType>
+
+
+	<element name="deployer" type="tns:DeployerType" />
+
+	<element name="targetDir" type="string">
+		<annotation>
+			<documentation>Directory where temporary data will be stored
+                    </documentation>
+		</annotation>
+	</element>
+	<element name="sourceDir" type="string">
+		<annotation>
+			<documentation>Directory where project to be deployed is stored
+			</documentation>
+		</annotation>
+	</element>
+	<element name="localDeploymentDir" type="string">
+		<annotation>
+			<documentation>Local directory where project is to be deployed to
+			</documentation>
+		</annotation>
+	</element>
+	<element name="remoteDeploymentDir" type="string">
+		<annotation>
+			<documentation>Remote directory where project is to be deployed to
+			</documentation>
+		</annotation>
+	</element>
+
+	<element name="items" type="tns:ItemType" />
+
+	<element name="transports" type="tns:Transports" />
+
+</schema>
