@@ -7,13 +7,16 @@
 
 	<complexType name="DeployerType">
 		<sequence>
-		    <element name="verbose" type="boolean" minOccurs="0" maxOccurs="1"/>
+			<element name="verbose" type="boolean" minOccurs="0" maxOccurs="1" />
+            <element ref="tns:pathToGzipLocal" minOccurs="0" maxOccurs="1"/>
+            <element ref="tns:pathToGzipRemote" minOccurs="0" maxOccurs="1"/>
 			<element ref="tns:targetDir" maxOccurs="1" minOccurs="1" />
 			<element ref="tns:sourceDir" maxOccurs="1" minOccurs="1" />
 			<element ref="tns:localDeploymentDir" maxOccurs="1" minOccurs="0" />
 			<element ref="tns:remoteDeploymentDir" maxOccurs="1" minOccurs="0" />
-			<element ref="tns:items" minOccurs="1" maxOccurs="1" />
 			<element ref="tns:transports" minOccurs="1" maxOccurs="1" />
+			<element ref="tns:items" minOccurs="1" maxOccurs="1" />
+			
 		</sequence>
 	</complexType>
 	<complexType name="ItemType">
@@ -108,5 +111,16 @@
 	<element name="items" type="tns:ItemType" />
 
 	<element name="transports" type="tns:Transports" />
+
+	<element name="pathToGzipLocal" type="string">
+		<annotation>
+			<documentation>Path to gzip executable on local system</documentation>
+		</annotation>
+	</element>
+	<element name="pathToGzipRemote" type="string">
+		<annotation>
+			<documentation>Path to gzip executable on remote system</documentation>
+		</annotation>
+	</element>
 
 </schema>

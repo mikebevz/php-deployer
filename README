@@ -1,5 +1,5 @@
 PHP Deployer
-A tool for deployment of PHP projects
+A tool for easy and fast deployment of PHP projects
 
 Features:
 - Pack files into archive
@@ -13,6 +13,13 @@ Requirements:
 - PHP 5
 - PHP Zip extension
 - PHP Ssh2 extension
-- gzip installed in the system
+- gzip installed on the target system
 
 
+Getting started
+1. Install deployer
+  - Locally
+  - Remote server scripts (run $ deployer --remoteInstall)
+2. Prepare configuration file (deployer.xml)
+3. Call deployer script
+  $ ./deployer

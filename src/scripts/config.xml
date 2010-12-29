@@ -4,7 +4,7 @@
 
 	<!-- REMEMBER to update Schema once you added/deleted something from config -->
 
-    <verbose>true</verbose>
+	<verbose>true</verbose>
 	<!-- Temporary directory where all work is performed, relative -->
 	<targetDir>../target</targetDir>
 	<!-- Where your project directory located, absolute path, or relative to scripts 
@@ -12,21 +12,6 @@
 	<sourceDir>../exampleSourceDir</sourceDir>
 	<localDeploymentDir></localDeploymentDir>
 	<remoteDeploymentDir></remoteDeploymentDir>
-
-	<!-- Relative to sourceDir -->
-	<items>
-		<!-- Copy recursivelly the entire directory -->
-		<item>application/auth</item>
-		<item>application/controllers</item>
-		<item>application/exceptions</item>
-
-		<!-- Copy only this file. all directories in path will be created -->
-		<item>deploy/classes/BackupManager.php</item>
-
-		<!-- Absolute path to copy. Will be ignored for now. !! Is not clear how to implement 
-			unpacking -->
-		<item>/usr/local/etc/nginx</item>
-	</items>
 
 	<transports>
 		<tranport name="ProdServer">
@@ -51,5 +36,21 @@
 		</tranport>
 
 	</transports>
+
+
+	<!-- Relative to sourceDir -->
+	<items>
+		<!-- Copy recursivelly the entire directory -->
+		<item>application/auth</item>
+		<item>application/controllers</item>
+		<item>application/exceptions</item>
+
+		<!-- Copy only this file. all directories in path will be created -->
+		<item>deploy/classes/BackupManager.php</item>
+
+		<!-- Absolute path to copy. Will be ignored for now. !! Is not clear how to implement 
+			unpacking -->
+		<item>/usr/local/etc/nginx</item>
+	</items>
 
 </deployer>
