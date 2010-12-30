@@ -163,7 +163,7 @@ class Deployer {
         
         $dir = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->targetDir), RecursiveIteratorIterator::CHILD_FIRST);
         foreach($dir as $cur) {
-            if ($cur->getFilename() == '.' || $cur->getFilename() == '..') {
+            if ($cur->getFilename() == '.' || $cur->getFilename() == '..' || $cur->getFilename() == '.gitkeep') {
                 continue;
             }
             $filePath = $cur->getPathname();
