@@ -14,6 +14,9 @@ class Deployer {
     private $remoteUsername = "";
     private $remotePassword = "";
     private $knownHost = "D59C12ADC382C3A12E519D05484690A2";
+    private $version = "0.0.1";
+    private $actionsCount = 0;
+    private $quiet = false;
     /**
      *
      * Phar
@@ -33,83 +36,34 @@ class Deployer {
      */
     private $config;
     private $verbose;
-    
+
     private $configSchemaPath;
 
-    private $items = array(
-    // Application
-    	'/application/auth',
-        '/application/connector',
-    //'/application/configs', //-- Only on initial
-    	'/application/controllers',
-        '/application/exceptions',
-    	'/application/interfaces',
-    	'/application/orm',
-        '/application/models',
-        '/application/resources',
-    	'/application/rsactions',
-    	'/application/utils',
-    	'/application/views',
-        '/application/services',
-        '/application/Bootstrap.php',
-        '/application/PathBootstrap.php',
-        '/application/SetIncludePath.php',
-        '/application/SharedBootstrap.php',
-
-    // Deploy
-    //'/deploy/deploy.php',
-        '/deploy/unzip.php',
-        '/deploy/classes/Deployer.php',
-        '/deploy/classes/BackupManager.php',
-        '/deploy/backup.php',
-
-    //Doctrine scripts
-    	'/doctrine',
-    // Languages
-        '/languages',
-
-    // Public
-    //'/public',
-    /*'/public/css',
-    '/public/extjs/css',
-    '/public/extjs/images',
-    '/public/extjs/lib/adapter',
-    '/public/extjs/lib/resources',
-    '/public/extjs/lib/ext-all-debug.js',
-    '/public/extjs/lib/ext-all.js',
-    '/public/extjs/plugins',
-    '/public/img',*/
-        '/public/js',
-        '/public/.htaccess',
-        '/public/crossdomain.xml',
-        '/public/favicon.ico',
-        '/public/expressinstall.swf',
-        '/public/index.php',
-        '/public/robots.txt',
-    	'/public/charts.swf',
-
-    // Flash
-    /* '/public/flash/RegnSelv.swf',
-    '/public/flash/AdminForPriceCalculation.swf',
-    '/public/flash/AdminForProfit.swf',
-    '/public/flash/AdminForRegnSelv.swf',
-    '/library/ext-direct',
-    '/library/stomp-php-1.0.0',
-    '/library/XSD2PHP',
-    '/library/Taggable',
-    '/library/Doctrine',
-    '/library/ZF',
-    '/library/ExtDirect'
-    */
-
-
-
-    );
+    private $items = array();
 
     private function say($msg) {
-        echo($msg."\n");
+        if (!$this->quiet) {
+            echo($msg."\n");
+        }
     }
 
+    private function sayYes($msg) {
+        if (!$this->quiet) {
+            echo("\033[32m".$msg."\033[0m\n");
+        }
+    }
+
+    private function sayNo($msg) {
+        if (!$this->quiet) {
+            echo("\033[31m".$msg."\033[0m\n");
+        }
+    }
+
+    /**
+     *
+     * Initialize deployer
+     * @param string $config Path to config file
+     */
     public function __construct($config = "deployer.xml") {
         if ($config == "deployer.xml") {
             $this->configPath = dirname(__FILE__).DIRECTORY_SEPARATOR.$config;
@@ -122,28 +76,38 @@ class Deployer {
         if (!is_readable($this->configPath)) {
             throw new Exception($this->configPath." is not readable");
         }
-        
+
+        // schema must be in the same directory with Deployer.php TODO figure out what's the best
         $this->configSchemaPath = dirname(__FILE__).DIRECTORY_SEPARATOR."Deployer_1.0.xsd";
-        
+
         $this->parseConfig();
 
 
     }
 
+    /**
+     *
+     * Parse XML configuration file and set up deployer
+     * @return void
+     * @throws Exception If targetDir is not found
+     * @throws Exception If sourceDir is not found
+     */
     private function parseConfig() {
-        $this->say("Parsing config in ".$this->configPath);
-        
+        $this->say("PhpDeployer version ".$this->version);
+        $this->say($this->getActionsCount().". Parsing config in ".$this->configPath);
+
+        // Checking config against schema
         libxml_use_internal_errors(true);
         $doc = new DOMDocument();
         $doc->load($this->configPath);
         $doc->schemaValidate($this->configSchemaPath);
         $errors = libxml_get_errors();
         if ($errors) {
-             throw new Exception($errors[0]->message);
+            throw new Exception($errors[0]->message);
         }
-        
+
         $this->config = simplexml_load_file($this->configPath, "SimpleXMLElement", LIBXML_COMPACT|LIBXML_NOCDATA);
-        
+
         $config = (array)$this->config;
 
         if ($this->checkDir((string)$config['targetDir'])){
@@ -156,18 +120,117 @@ class Deployer {
         } else {
             throw new Exception("Source directory is not found in ".(string)$config['sourceDir']);
         }
-        
-        $this->verbose = (boolean)$config->verbose;
+
+        $projectName = preg_replace("/ /", "_", $config['project']);//TODO include check for special symbols etc
+        if ($config['verbose'] == 'true') {
+            $this->verbose = true;
+        } else {
+            $this->verbose = false;
+        }
+
+
+        $this->verbose ? $this->say("Deploying ".$config['project']."...") : false;
+        $this->setDeploymentName($projectName.".zip");
+
 
         $items = array();
         foreach($config['items'] as $item) {
             array_push($items, (string)$item);
         }
         $this->setItems($items);
-
-        print_r($this->getItems());
+        $this->sayYes("Done");
+    }
+    
+    private function getActionsCount() {
+        return $this->actionsCount++;
     }
 
+    /**
+     *
+     * Delete everything in targetDir
+     * @return void
+     */
+    public function cleanTargetDirAction() {
+
+        if (!file_exists($this->targetDir)) {
+            mkdir($this->targetDir);
+        }
+
+        if (!is_writeable($this->targetDir)) {
+            throw new Exception($this->targetDir." must be writable");
+        }
+        $this->verbose ? $this->say($this->getActionsCount().". Deleting content of ".$this->targetDir) : $this->say($this->getActionsCount().". Cleaning target directory...");
+        
+        $dir = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->targetDir), RecursiveIteratorIterator::CHILD_FIRST);
+        foreach($dir as $cur) {
+            if ($cur->getFilename() == '.' || $cur->getFilename() == '..') {
+                continue;
+            }
+            $filePath = $cur->getPathname();
+             
+            if (is_dir($filePath)) {
+                rmdir($filePath);
+            }
+            if (is_file($filePath) || is_link($filePath)) {
+                unlink($filePath);
+            }
+        }
+        $this->sayYes("Done");
+
+    }
+    
+    /**
+     * 
+     * Copy specified items to targetDir
+     * @return void
+     * @throws Exception If sourceDir is not readable
+     * @throws Exception If targetDir is not readable
+     * @throws Exception If items are not specified
+     */
+    public function copyFilesAction() {
+        if (!is_readable($this->sourceDir)) {
+            throw new Exception($this->sourceDir." must be readable");
+        }
+
+        if (!is_writeable($this->targetDir)) {
+            throw new Exception($this->targetDir." must be writable");
+        }
+
+        $this->say($this->getActionsCount().". Copying files...");
+
+        if (empty($this->items)) {
+            throw new Exception("Please specify files for deployment in your ".$this->configPath);
+        }
+
+        foreach($this->items as $file) {
+
+            $srcItemName = $this->sourceDir.DIRECTORY_SEPARATOR.$file;
+            $dstItemName = $this->targetDir.DIRECTORY_SEPARATOR.$file;
+            $this->verbose ? $this->say($srcItemName." to ".$dstItemName) : false;
+            if (!file_exists($srcItemName)) {
+                $this->say("File not found:". $srcItemName);
+            }
+            if (is_dir($srcItemName)) {
+                $this->recDirCopy($srcItemName, $dstItemName);
+            }
+
+            if (is_file($srcItemName)) {
+                $this->recFileCopy($srcItemName, $dstItemName);
+
+            }
+        }
+
+        $this->verbose ? $this->say("Files successfully copied from ".$this->sourceDir." to ".$this->targetDir) : $this->sayYes("Done");
+
+
+    }
+
+    /**
+     *
+     * Check existance of the directory
+     * @param string $dir
+     * @return boolean
+     */
     private function checkDir($dir) {
         if (file_exists($dir)) {
             // check if directory exists in case it's absolute path
@@ -178,18 +241,23 @@ class Deployer {
         } else {
             return false;
         }
-        
-        
+
+
     }
 
-    public function buildAcrhive() {
+    /**
+     * Build ZIP archive and gzip it
+     *
+     * @return void
+     */
+    public function buildAcrhiveAction() {
 
         $zip = new ZipArchive();
         $archive = $this->targetDir.DIRECTORY_SEPARATOR.$this->deploymentName;
-        $this->say("Building new ZIP acrhive in ".$archive);
+        $this->verbose ? $this->say($this->getActionsCount().". Building new ZIP acrhive in ".$archive) : $this->say($this->getActionsCount().". Archiving files...");
         if (file_exists($archive)) {
             unlink($archive);
-            $this->say("Deleting old archive: ".$archive);
+            $this->verbose ? $this->say("Deleting old archive: ".$archive) : false;
         }
 
         if ($zip->open($archive, ZIPARCHIVE::CREATE) !== true) {
@@ -203,13 +271,13 @@ class Deployer {
 
         if (!file_exists($archive)) {
             $this->say(__METHOD__.': Backup was not created for unknown reason');
-            //throw new RuntimeException(__METHOD__.': Backup was not created for unknown reason');
+            throw new RuntimeException(__METHOD__.': Backup was not created for unknown reason');
         }
 
         $command = "gzip -9 ".$archive;
         system($command, $status);
         $this->deploymentName = $this->deploymentName.".gz";
-        $this->say("New archive created and ready for deployment: ".$archive.".gz");
+        $this->verbose ? $this->say("New archive created and ready for deployment: ".$archive.".gz") : $this->sayYes("Done");
 
     }
 
@@ -433,7 +501,7 @@ class Deployer {
 
     }
 
-    public function remoteCommand($command, $connection = false) {
+    private function remoteCommand($command, $connection = false) {
         if ($connection === false) {
             $connection = $this->getSshConnection();
         }
@@ -470,71 +538,9 @@ class Deployer {
         //Backup database on remote host
     }
 
-    public function cleanTargetDirAction() {
-
-        if (!file_exists($this->targetDir)) {
-            mkdir($this->targetDir);
-        }
-
-        if (!is_writeable($this->targetDir)) {
-            throw new Exception($this->targetDir." must be writable");
-        }
-        $this->say("Deleting content of ".$this->targetDir);
-        $dir = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->targetDir), RecursiveIteratorIterator::CHILD_FIRST);
-        foreach($dir as $cur) {
-            if ($cur->getFilename() == '.' || $cur->getFilename() == '..') {
-                continue;
-            }
-            $filePath = $cur->getPathname();
-             
-            if (is_dir($filePath)) {
-                rmdir($filePath);
-            }
-            if (is_file($filePath) || is_link($filePath)) {
-                unlink($filePath);
-            }
-        }
-        $this->say("Deleted!");
-
-    }
-
-    public function copyFilesAction() {
-        if (!is_readable($this->sourceDir)) {
-            throw new Exception($this->sourceDir." must be readable");
-        }
-
-        if (!is_writeable($this->targetDir)) {
-            throw new Exception($this->targetDir." must be writable");
-        }
-
-        $this->say("Copying files...");
-
-        if (empty($this->items)) {
-            throw new Exception("Items to copy are not set");
-        } else {
-            //print_r($this->items);
-        }
-
-        foreach($this->items as $file) {
-
-            $srcItemName = $this->sourceDir.$file;
-            $dstItemName = $this->targetDir.$file;
-            if (is_dir($srcItemName)) {
-                $this->recDirCopy($srcItemName, $dstItemName);
-
-            }
-
-            if (is_file($srcItemName)) {
-                $this->recFileCopy($srcItemName, $dstItemName);
-
-            }
-
-        }
-
-        $this->say("Files successfully copied from ".$this->sourceDir." to ".$this->targetDir);
 
 
-    }
+
 
     private function recFileCopy ($src, $dst) {
         $srcDir = dirname($src);
@@ -543,7 +549,14 @@ class Deployer {
         copy($src, $dst);
 
     }
-
+    
+    /**
+     * 
+     * Copy directory recursivery
+     * @param string $src Source path
+     * @param string $dst Target path
+     * @return void
+     */
     private function recDirCopy($src, $dst) {
 
         $this->checkDirOrCreateRec($dst);

@@ -20,6 +20,9 @@ if (count($argv) == 2) {
 
 try {
     $dep = new Deployer($configPath);
+    $dep->cleanTargetDirAction();
+    $dep->copyFilesAction();
+    $dep->buildAcrhiveAction();
 } catch (Exception $e) {
     echo("\033[31mError: ".$e->getMessage()." \033[0m\n");
 }
