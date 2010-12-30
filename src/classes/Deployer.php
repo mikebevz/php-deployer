@@ -1,12 +1,50 @@
 <?php
-class Deployer {
+/* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
+/**
+ * Php Deployer - a tool for easy deployment to remote server
+ *
+ * Php Deployer is a tool for easy deployment of a project to remote destinations
+ * using protocols like FTP, SFTP.
+ *
+ * PHP versions 5
+ *
+ * LICENSE: This source file is subject to version 3.0 of the PHP license
+ * that is available through the world-wide-web at the following URI:
+ * http://www.php.net/license/3_0.txt.  If you did not receive a copy of
+ * the PHP License and are unable to obtain it through the web, please
+ * send a note to license@php.net so we can mail you a copy immediately.
+ *
+ * @category  Tools_And_Utilities
+ * @package   Deployer
+ * @author    Mike Bevz <myb@mikebevz.com>
+ * @copyright 2010 Mike Bevz
+ * @license   http://www.php.net/license/3_0.txt  PHP License 3.0
+ * @version   Git: 0.0.1
+ * @link      http://moyarada.com/package/Deployer
+ */
+
+/**
+ * Php Deployer - a tool for easy deployment to remote server
+ *
+ * @category  Tools_And_Utilities
+ * @package   Deployer
+ * @author    Mike Bevz <myb@mikebevz.com>
+ * @copyright 2010 Mike Bevz
+ * @license   http://www.php.net/license/3_0.txt  PHP License 3.0
+ * @version   Release: @package_version@
+ * @link      http://moyarada.com/package/Deployer
+ *
+ *
+ */
+class Deployer
+{
 
     private $sourceDir;
     private $targetDir;
-    private $zfBasePointer;
-    private $pharName;
-    private $stubName;
-    private $stubPath;
+    //private $zfBasePointer;
+    //private $pharName;
+    //private $stubName;
+    //private $stubPath;
     private $deployDir;
     private $deploymentName;
     private $remoteHost = "";
@@ -41,19 +79,22 @@ class Deployer {
 
     private $items = array();
 
-    private function say($msg) {
+    private function say($msg)
+    {
         if (!$this->quiet) {
             echo($msg."\n");
         }
     }
 
-    private function sayYes($msg) {
+    private function sayYes($msg)
+    {
         if (!$this->quiet) {
             echo("\033[32m".$msg."\033[0m\n");
         }
     }
 
-    private function sayNo($msg) {
+    private function sayNo($msg)
+    {
         if (!$this->quiet) {
             echo("\033[31m".$msg."\033[0m\n");
         }
@@ -64,7 +105,8 @@ class Deployer {
      * Initialize deployer
      * @param string $config Path to config file
      */
-    public function __construct($config = "deployer.xml") {
+    public function __construct($config = "deployer.xml")
+    {
         if ($config == "deployer.xml") {
             $this->configPath = dirname(__FILE__).DIRECTORY_SEPARATOR.$config;
         } elseif (file_exists($config)) {
@@ -77,8 +119,10 @@ class Deployer {
             throw new Exception($this->configPath." is not readable");
         }
 
-        // schema must be in the same directory with Deployer.php TODO figure out what's the best
-        $this->configSchemaPath = dirname(__FILE__).DIRECTORY_SEPARATOR."Deployer_1.0.xsd";
+        // schema must be in the same directory with Deployer.php
+        // TODO figure out what's the best
+        $this->configSchemaPath = dirname(__FILE__).DIRECTORY_SEPARATOR
+        ."Deployer_1.0.xsd";
 
         $this->parseConfig();
 
@@ -88,13 +132,16 @@ class Deployer {
     /**
      *
      * Parse XML configuration file and set up deployer
+     *
      * @return void
      * @throws Exception If targetDir is not found
      * @throws Exception If sourceDir is not found
      */
-    private function parseConfig() {
+    private function parseConfig()
+    {
         $this->say("PhpDeployer version ".$this->version);
-        $this->say($this->getActionsCount().". Parsing config in ".$this->configPath);
+        $this->say($this->getActionsCount().". Parsing config in "
+        .$this->configPath);
 
         // Checking config against schema
         libxml_use_internal_errors(true);
@@ -106,22 +153,27 @@ class Deployer {
             throw new Exception($errors[0]->message);
         }
 
-        $this->config = simplexml_load_file($this->configPath, "SimpleXMLElement", LIBXML_COMPACT|LIBXML_NOCDATA);
+        $this->config = simplexml_load_file($this->configPath,
+        									"SimpleXMLElement", 
+        LIBXML_COMPACT|LIBXML_NOCDATA);
 
         $config = (array)$this->config;
 
         if ($this->checkDir((string)$config['targetDir'])){
             $this->setTargetDir(realpath((string)$config['targetDir']));
         } else {
-            throw new Exception("Target directory is not found in ".(string)$config['targetDir']);
+            throw new Exception("Target directory is not found in "
+            .(string)$config['targetDir']);
         }
         if ($this->checkDir((string)$config['sourceDir'])) {
             $this->setSourceDir(realpath((string)$config['sourceDir']));
         } else {
-            throw new Exception("Source directory is not found in ".(string)$config['sourceDir']);
+            throw new Exception("Source directory is not found in "
+            .(string)$config['sourceDir']);
         }
 
-        $projectName = preg_replace("/ /", "_", $config['project']);//TODO include check for special symbols etc
+        //TODO include check for special symbols etc
+        $projectName = preg_replace("/ /", "_", $config['project']);
         if ($config['verbose'] == 'true') {
             $this->verbose = true;
         } else {
@@ -140,17 +192,18 @@ class Deployer {
         $this->setItems($items);
         $this->sayYes("Done");
     }
-    
+
     private function getActionsCount() {
         return $this->actionsCount++;
     }
 
     /**
-     *
      * Delete everything in targetDir
+     *
      * @return void
      */
-    public function cleanTargetDirAction() {
+    public function cleanTargetDirAction()
+    {
 
         if (!file_exists($this->targetDir)) {
             mkdir($this->targetDir);
@@ -159,11 +212,17 @@ class Deployer {
         if (!is_writeable($this->targetDir)) {
             throw new Exception($this->targetDir." must be writable");
         }
-        $this->verbose ? $this->say($this->getActionsCount().". Deleting content of ".$this->targetDir) : $this->say($this->getActionsCount().". Cleaning target directory...");
-        
-        $dir = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->targetDir), RecursiveIteratorIterator::CHILD_FIRST);
+        $this->verbose ? $this->say($this->getActionsCount()."
+        		. Deleting content of ".$this->targetDir) : 
+        $this->say($this->getActionsCount()
+        .". Cleaning target directory...");
+
+        $dir = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($this->targetDir), 
+                                RecursiveIteratorIterator::CHILD_FIRST);
         foreach($dir as $cur) {
-            if ($cur->getFilename() == '.' || $cur->getFilename() == '..' || $cur->getFilename() == '.gitkeep') {
+            if ($cur->getFilename() == '.' || $cur->getFilename() == '..' 
+             || $cur->getFilename() == '.gitkeep') {
                 continue;
             }
             $filePath = $cur->getPathname();
@@ -178,16 +237,18 @@ class Deployer {
         $this->sayYes("Done");
 
     }
-    
+
     /**
-     * 
+     *
      * Copy specified items to targetDir
+     *
      * @return void
      * @throws Exception If sourceDir is not readable
      * @throws Exception If targetDir is not readable
      * @throws Exception If items are not specified
      */
-    public function copyFilesAction() {
+    public function copyFilesAction()
+    {
         if (!is_readable($this->sourceDir)) {
             throw new Exception($this->sourceDir." must be readable");
         }
@@ -199,14 +260,15 @@ class Deployer {
         $this->say($this->getActionsCount().". Copying files...");
 
         if (empty($this->items)) {
-            throw new Exception("Please specify files for deployment in your ".$this->configPath);
+            throw new Exception("Please specify files for deployment in your "
+                .$this->configPath);
         }
 
         foreach($this->items as $file) {
 
             $srcItemName = $this->sourceDir.DIRECTORY_SEPARATOR.$file;
             $dstItemName = $this->targetDir.DIRECTORY_SEPARATOR.$file;
-            $this->verbose ? $this->say($srcItemName." to ".$dstItemName) : false;
+            $this->verbose ? $this->say($srcItemName." to ".$dstItemName):false;
             if (!file_exists($srcItemName)) {
                 $this->say("File not found:". $srcItemName);
             }
@@ -220,7 +282,9 @@ class Deployer {
             }
         }
 
-        $this->verbose ? $this->say("Files successfully copied from ".$this->sourceDir." to ".$this->targetDir) : $this->sayYes("Done");
+        $this->verbose ? $this->say("Files successfully copied from "
+                                .$this->sourceDir." to ".$this->targetDir) : 
+                                    $this->sayYes("Done");
 
 
     }
@@ -229,14 +293,18 @@ class Deployer {
      *
      * Check existance of the directory
      * @param string $dir
+     *
      * @return boolean
      */
-    private function checkDir($dir) {
+    private function checkDir($dir)
+    {
         if (file_exists($dir)) {
             // check if directory exists in case it's absolute path
             return true;
-        } elseif (file_exists(basename($this->configPath).DIRECTORY_SEPARATOR.$dir)) {
-            // It might be relative path - check if directory exists where config located
+        } elseif (file_exists(basename($this->configPath)
+                                       .DIRECTORY_SEPARATOR.$dir)) {
+            // It might be relative path - check if directory exists where 
+            // config located
             return true;
         } else {
             return false;
@@ -250,11 +318,15 @@ class Deployer {
      *
      * @return void
      */
-    public function buildAcrhiveAction() {
+    public function buildAcrhiveAction()
+    {
 
         $zip = new ZipArchive();
         $archive = $this->targetDir.DIRECTORY_SEPARATOR.$this->deploymentName;
-        $this->verbose ? $this->say($this->getActionsCount().". Building new ZIP acrhive in ".$archive) : $this->say($this->getActionsCount().". Archiving files...");
+        $this->verbose ? $this->say($this->getActionsCount()
+                            .". Building new ZIP acrhive in ".$archive) : 
+                        $this->say($this->getActionsCount()
+                            .". Archiving files...");
         if (file_exists($archive)) {
             unlink($archive);
             $this->verbose ? $this->say("Deleting old archive: ".$archive) : false;
@@ -290,7 +362,8 @@ class Deployer {
      *
      * @return void
      */
-    private function addDir($filename, $localname, ZipArchive $zip) {
+    private function addDir($filename, $localname, ZipArchive $zip)
+    {
 
         $zip->addEmptyDir($localname);
 
@@ -314,7 +387,7 @@ class Deployer {
                 // $this->say(__METHOD__.': added file'.$fileinfo->getPathname());
             }
 
-            if ($fileinfo->isDir()){
+            if ($fileinfo->isDir()) {
                 $this->addDir($fileinfo->getPathname(), $localname .DIRECTORY_SEPARATOR .
                 $fileinfo->getFilename(), $zip);
                 //$this->say(__METHOD__.': added dir'.$fileinfo->getPathname());
@@ -327,7 +400,8 @@ class Deployer {
      * Problem with PHAR is that it doesn't support realpath for now. There is some bug
      * Enter description here ...
      */
-    public function buildPhar() {
+    public function buildPhar()
+    {
 
         $filePath = $this->targetDir.DIRECTORY_SEPARATOR.$this->pharName;
         $this->say("Creating new phar archive: ".$filePath);
@@ -345,10 +419,10 @@ class Deployer {
         $this->copyStub();
 
         $rd = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->targetDir));
-        foreach($rd as $file) {
+        foreach ($rd as $file) {
             if ((strpos($file->getPath(), '.svn') ===false) &&
             $file->getFilename() != '..' &&
-            $file->getFilename() != '.'){
+            $file->getFilename() != '.') {
                 $files[substr($file->getPath().DIRECTORY_SEPARATOR.$file->getFilename(), strlen($this->targetDir))] = $file->getPath().DIRECTORY_SEPARATOR.$file->getFilename();
 
             }
@@ -364,13 +438,17 @@ class Deployer {
         $this->say("Phar successfully created ".$filePath);
     }
 
-    private function copyStub() {
+    private function copyStub()
+    {
         //TODO add checks
-        copy($this->stubPath.DIRECTORY_SEPARATOR.$this->stubName, $this->targetDir.DIRECTORY_SEPARATOR.$this->stubName);
-        $this->say("Stub copied to ".$this->targetDir.DIRECTORY_SEPARATOR.$this->stubName);
+        copy($this->stubPath.DIRECTORY_SEPARATOR.$this->stubName, 
+             $this->targetDir.DIRECTORY_SEPARATOR.$this->stubName);
+        $this->say("Stub copied to ".$this->targetDir
+                    .DIRECTORY_SEPARATOR.$this->stubName);
     }
 
-    public function deploy() {
+    public function deploy()
+    {
         $deployFilename = $this->deployDir.DIRECTORY_SEPARATOR.$this->deploymentName;
         if (file_exists($deployFilename)) {
             unlink($deployFilename);
@@ -384,38 +462,46 @@ class Deployer {
 
 
 
-    public function getSshConnection() {
+    public function getSshConnection()
+    {
 
         $methods = array(
               'kex' => 'diffie-hellman-group1-sha1',
               'client_to_server' => array(
-                'crypt' => 'rijndael-cbc@lysator.liu.se, aes256-cbc, aes192-cbc, aes128-cbc, 3des-cbc, blowfish-cbc, cast128-cbc, arcfour',
+                'crypt' => 'rijndael-cbc@lysator.liu.se, aes256-cbc, aes192-cbc, 
+                	aes128-cbc, 3des-cbc, blowfish-cbc, cast128-cbc, arcfour',
                 'comp' => 'none',
-                'mac' => 'hmac-sha1, hmac-sha1-96, hmac-ripemd160, hmac-ripemd160@openssh.com'
-                ),
+                'mac' => 'hmac-sha1, hmac-sha1-96, hmac-ripemd160, 
+                	hmac-ripemd160@openssh.com'
+                	),
               'server_to_client' => array(
-                'crypt' => 'rijndael-cbc@lysator.liu.se, aes256-cbc, aes192-cbc, aes128-cbc, 3des-cbc, blowfish-cbc, cast128-cbc, arcfour',
+                'crypt' => 'rijndael-cbc@lysator.liu.se, aes256-cbc, aes192-cbc, 
+                	aes128-cbc, 3des-cbc, blowfish-cbc, cast128-cbc, arcfour',
                 'comp' => 'none',
                 'mac' => 'hmac-sha1, hmac-sha1-96, hmac-ripemd160, hmac-ripemd160@openssh.com'
                 ));
                 $connection = ssh2_connect($this->remoteHost, $this->remotePort, $methods);
-                $fingerprint = ssh2_fingerprint($connection, SSH2_FINGERPRINT_MD5 | SSH2_FINGERPRINT_HEX);
+                $fingerprint = ssh2_fingerprint($connection,
+                SSH2_FINGERPRINT_MD5 | SSH2_FINGERPRINT_HEX);
 
                 if ($fingerprint != $this->knownHost) {
                     die ("HOSTKEY MISMATCH! Possible Man-In-The-Middle attack?");
                 }
                 $this->say("Fingerprint: ".$fingerprint);
 
-                if (!ssh2_auth_password($connection, $this->remoteUsername, $this->remotePassword)) {
-                    //if (!ssh2_auth_pubkey_file($connection, $this->remoteUsername, $this->pubKey, $this->privKey)) {
-                    $this->say("Unable to establish connection to ".$this->remoteHost.":".$this->remotePort);
+                if (!ssh2_auth_password($connection,
+                $this->remoteUsername,
+                $this->remotePassword)) {
+                    $this->say("Unable to establish connection to "
+                    .$this->remoteHost.":".$this->remotePort);
                     return false;
                 }
 
                 return $connection;
     }
 
-    public function deployRemote() {
+    public function deployRemote()
+    {
 
         $connection = $this->getSshConnection();
         if (!$connection) {
@@ -423,11 +509,11 @@ class Deployer {
             return false;
         }
 
-        //ssh2_scp_send($connection, $this->deployDir.DIRECTORY_SEPARATOR.$this->deploymentName,"/var/www/sites/".$this->deploymentName);
-        //ssh2_exec($objConnection, 'exit');
-        $localFilename = $this->deployDir.DIRECTORY_SEPARATOR.$this->deploymentName;
+        $localFilename = $this->deployDir.DIRECTORY_SEPARATOR
+        .$this->deploymentName;
         $remoteFilename = "/var/www/sites/deploy/".$this->deploymentName;
-        $this->say("Upload ".$localFilename." to ".$this->remoteHost.":".$this->remotePort."".$remoteFilename);
+        $this->say("Upload ".$localFilename." to ".$this->remoteHost.":"
+        .$this->remotePort."".$remoteFilename);
 
         $sftp = ssh2_sftp($connection);
 
@@ -435,13 +521,15 @@ class Deployer {
 
         try {
             if (!$sftpStream) {
-                throw new Exception("Could not open remote file: ".$remoteFilename);
+                throw new Exception("Could not open remote file: "
+                .$remoteFilename);
             }
 
             $localData = @file_get_contents($localFilename);
 
             if ($localData === false) {
-                throw new Exception("Could not open local file: ".$localFilename);
+                throw new Exception("Could not open local file: "
+                .$localFilename);
             }
             $parts = 40;
             $dataLength = strlen($localData);
@@ -455,13 +543,15 @@ class Deployer {
 
             $timeStart = time();
             $bytes = false;
-            for ($written = 0; $written < strlen($localData); $written += $chunksize) {
+            for ($written = 0; $written < strlen($localData);
+            $written += $chunksize) {
                  
-                //$this->say("Start: ".$written. " Size: ".$chunksize. "Rest ".($dataLength-$written));
-                $bytes += fwrite($sftpStream, substr($localData, $written, $chunksize));
+                $bytes += fwrite($sftpStream,
+                substr($localData, $written, $chunksize));
                 if ($dataLength-$written ==$rest) {
                     //$this->say("Write rest ".$rest);
-                    $bytes += fwrite($sftpStream, substr($localData, $written+$chunksize, $rest));
+                    $bytes += fwrite($sftpStream,
+                    substr($localData, $written+$chunksize, $rest));
                 }
                 $timeCurrent = time();
                 $timeSpent = $timeCurrent-$timeStart;
@@ -470,13 +560,16 @@ class Deployer {
                 if ($timeSpent > 0){
                     $speed = (int)(($bytes/$timeSpent)/1024);
                     $timeLeft = (int) (($dataLength-$written)/($speed*1024));
-                    $this->say("Time spent: ".$timeSpent." seconds. Speed: ".$speed. "Kb/s. Finished in ".$timeLeft." seconds");
+                    $this->say("Time spent: ".$timeSpent." seconds. Speed: "
+                    .$speed. "Kb/s. Finished in ".$timeLeft." seconds");
                 }
-                $this->say("Left: ".(($dataLength-$written))." bytes. ". ((int)(($written/$dataLength)*100))."%");
+                $this->say("Left: ".(($dataLength-$written))." bytes. "
+                . ((int)(($written/$dataLength)*100))."%");
             }
 
             if ($bytes === false) {
-                throw new Exception("Could not send data from file ".$localFilename);
+                throw new Exception("Could not send data from file "
+                .$localFilename);
             }
 
             if ($dataLength != $bytes) {
@@ -495,13 +588,15 @@ class Deployer {
         //$this->unzipRemote($connection);
     }
 
-    public function unzipRemote($connection = false) {
+    public function unzipRemote($connection = false)
+    {
         $this->remoteCommand('/var/www/sites/deploy/unzip.php');
 
 
     }
 
-    private function remoteCommand($command, $connection = false) {
+    private function remoteCommand($command, $connection = false)
+    {
         if ($connection === false) {
             $connection = $this->getSshConnection();
         }
@@ -533,37 +628,31 @@ class Deployer {
     }
 
 
-    public function backupData() {
-        //Backup data on remote host
-        //Backup database on remote host
-    }
-
-
-
-
-
-    private function recFileCopy ($src, $dst) {
+    private function recFileCopy ($src, $dst)
+    {
         $srcDir = dirname($src);
         $dstDir = dirname($dst);
         $this->checkDirOrCreateRec($dstDir);
         copy($src, $dst);
 
     }
-    
+
     /**
-     * 
+     *
      * Copy directory recursivery
      * @param string $src Source path
      * @param string $dst Target path
+     *
      * @return void
      */
-    private function recDirCopy($src, $dst) {
+    private function recDirCopy($src, $dst)
+    {
 
         $this->checkDirOrCreateRec($dst);
 
         $dir = opendir($src);
 
-        while(false !== ( $file = readdir($dir)) ) {
+        while (false !== ( $file = readdir($dir)) ) {
             if (( $file != '.' ) && ( $file != '..' )) {
                 $srcFilename = $src . DIRECTORY_SEPARATOR . $file;
                 $dstFilename = $dst . DIRECTORY_SEPARATOR . $file;
@@ -577,7 +666,7 @@ class Deployer {
                         continue;
                     }
 
-                    if (!file_exists(dirname($dstFilename))){
+                    if (!file_exists(dirname($dstFilename))) {
                         $this->say(dirname($dstFilename)." not exist");
                         $this->checkDirOrCreateRec(dirname($dstFilename));
                     }
@@ -591,7 +680,8 @@ class Deployer {
         closedir($dir);
     }
 
-    public function extractArchive($archive, $dest) {
+    public function extractArchive($archive, $dest)
+    {
         if (!is_writable($dest)) {
             throw new Exception("Dest dir ".$dest." is no writable");
         }
@@ -604,7 +694,8 @@ class Deployer {
         }
     }
 
-    private function checkDirOrCreateRec($dst) {
+    private function checkDirOrCreateRec($dst)
+    {
         $arr = explode(DIRECTORY_SEPARATOR, $dst);
         $length = count($arr);
         $prev = '';
@@ -617,7 +708,8 @@ class Deployer {
         }
     }
 
-    private function checkDirOrCreate($src, $dst) {
+    private function checkDirOrCreate($src, $dst)
+    {
 
         $relative    = $this->mb_string_intersect($src, $dst);
         $common = str_replace($relative, '', $dst);
@@ -637,13 +729,15 @@ class Deployer {
 
     }
 
-
-
-    public function compileJsAction() {
-        // Compile JS files
-    }
-
-
+    /**
+     * Find intersection of two strings
+     *
+     * @param string  $string1
+     * @param string  $string2
+     * @param integer $minChars
+     *
+     * @return string
+     */
     private function mb_string_intersect($string1, $string2, $minChars = 5)
     {
         assert('$minChars > 1');
@@ -685,48 +779,64 @@ class Deployer {
         return null;
     }
 
-    public function getTargetDir() {
+    /**
+     * Get target directory path
+     *
+     * @return string
+     */
+    public function getTargetDir()
+    {
         return $this->targetDir;
     }
 
-    public function setTargetDir($dir) {
+    public function setTargetDir($dir)
+    {
         $this->targetDir = $dir;
     }
 
-    public function getSourceDir() {
+    public function getSourceDir()
+    {
         return $this->sourceDir;
     }
 
-    public function setSourceDir($dir) {
+    public function setSourceDir($dir)
+    {
         $this->sourceDir = $dir;
     }
 
-    public function setDeploymentDir($dir) {
+    public function setDeploymentDir($dir)
+    {
         $this->deployDir = $dir;
     }
 
-    public function getDeploymentDir() {
+    public function getDeploymentDir()
+    {
         return $this->deployDir;
     }
 
-    public function setDeploymentName($name) {
+    public function setDeploymentName($name)
+    {
         $this->deploymentName = $name;
     }
 
-    public function getDeploymentName() {
+    public function getDeploymentName()
+    {
         return $this->deploymentName;
     }
 
-    public function setItems($items) {
+    public function setItems($items)
+    {
 
         $this->items = $items;
     }
 
-    public function getItems() {
+    public function getItems()
+    {
         return $this->items;
     }
 
-    public function remoteBackupAction() {
+    public function remoteBackupAction()
+    {
         $this->remoteCommand("/var/www/sites/deploy/backup.php");
 
     }

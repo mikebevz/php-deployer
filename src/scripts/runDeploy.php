@@ -23,7 +23,7 @@ try {
     $dep->cleanTargetDirAction();
     $dep->copyFilesAction();
     $dep->buildAcrhiveAction();
-    
+
     $dep->cleanTargetDirAction();
 } catch (Exception $e) {
     echo("\033[31mError: ".$e->getMessage()." \033[0m\n");

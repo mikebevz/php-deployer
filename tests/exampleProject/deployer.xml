@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://moyarada.com/schemas/Deployer_1.0 ../classes/Deployer_1.0.xsd">
 
 	<!-- REMEMBER to update Schema once you added/deleted something from config -->
-    <project>My example project</project>
+	<project>My example project</project>
 	<verbose>false</verbose>
 	<!-- Temporary directory where all work is performed, relative -->
 	<targetDir>tmp/deployer</targetDir>
@@ -43,11 +43,11 @@
 		<!-- Copy recursivelly the entire directory -->
 		<item>application</item>
 		<item>libs/lib1</item>
-		
+
 		<!-- Copy only this file. all directories in path will be created -->
 		<item>templates/index/index.phtml</item>
 		<item>templates/layouts</item>
-		
+
 	</items>
 
 </deployer>
