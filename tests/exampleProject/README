@@ -1,0 +1,9 @@
+Example project for deployment
+
+How to use
+From this directory run the following 
+  $ ../../src/scripts/runDeploy.php
+
+Temporary directory for deployer located in tmp/deployer  
+
+
